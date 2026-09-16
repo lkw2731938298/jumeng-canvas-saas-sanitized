@@ -57,7 +57,7 @@ npm run dev
 | `config/llm-keys.example.env` | 大模型供应商密钥（空模板） |
 | `scripts/deploy/env.sh.example` | 自建部署变量模板 |
 
-**不要**把真实口令、API Key、ICP 备案号写进仓库。清洗说明见 [OPENSOURCE.md](./OPENSOURCE.md)。
+**不要**把真实口令、API Key、ICP 备案号写进仓库。
 
 ## 贡献与安全
 
