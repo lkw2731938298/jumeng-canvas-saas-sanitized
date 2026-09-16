@@ -1,0 +1,237 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: jumeng_canvas
+      MYSQL_USER: jumeng_canvas
+      MYSQL_PASSWORD: change-me
+      MYSQL_ROOT_PASSWORD: change-me
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports: ["3306:3306"]
+    volumes: [mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ujumeng_canvas", "-pchange-me"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports: ["6380:6379"]
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  api:
+    image: jumeng-canvas-api
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers $${API_WORKERS:-2}"]
+    environment:
+      DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
+      CANVAS_SESSION_SECRET: "${CANVAS_SESSION_SECRET:-}"
+      CANVAS_SESSION_TTL_SECONDS: "${CANVAS_SESSION_TTL_SECONDS:-2592000}"
+      REGISTRATION_ENABLED: "${REGISTRATION_ENABLED:-true}"
+      SMS_REGISTRATION_REQUIRED: "${SMS_REGISTRATION_REQUIRED:-true}"
+      SMS_SEND_COOLDOWN_SECONDS: "${SMS_SEND_COOLDOWN_SECONDS:-60}"
+      SMS_CODE_TTL_SECONDS: "${SMS_CODE_TTL_SECONDS:-300}"
+      SMS_DEBUG_RETURN_CODE: "${SMS_DEBUG_RETURN_CODE:-true}"
+      SMS_FORCE_LOCAL_DEBUG: "${SMS_FORCE_LOCAL_DEBUG:-true}"
+      SMS_FALLBACK_ON_PROVIDER_ERROR: "${SMS_FALLBACK_ON_PROVIDER_ERROR:-true}"
+      ALIBABA_CLOUD_ACCESS_KEY_ID: "${ALIBABA_CLOUD_ACCESS_KEY_ID:-}"
+      ALIBABA_CLOUD_ACCESS_KEY_SECRET: "${ALIBABA_CLOUD_ACCESS_KEY_SECRET:-}"
+      ALIBABA_CLOUD_REGION_ID: "${ALIBABA_CLOUD_REGION_ID:-cn-hangzhou}"
+      SMS_SIGN_NAME: "${SMS_SIGN_NAME:-}"
+      SMS_TEMPLATE_CODE: "${SMS_TEMPLATE_CODE:-}"
+      SMS_TEMPLATE_PARAM_KEY: "${SMS_TEMPLATE_PARAM_KEY:-code}"
+      MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
+      MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
+      COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      OSS_ENDPOINT: "${OSS_ENDPOINT:-}"
+      OSS_BUCKET: "${OSS_BUCKET:-}"
+      OSS_ACCESS_KEY_ID: "${OSS_ACCESS_KEY_ID:-}"
+      OSS_ACCESS_KEY_SECRET: "${OSS_ACCESS_KEY_SECRET:-}"
+      OSS_OBJECT_PREFIX: "${OSS_OBJECT_PREFIX:-canvas}"
+      CANVAS_STORAGE_LOCAL_ONLY: "${CANVAS_STORAGE_LOCAL_ONLY:-true}"
+      STORAGE_URL_MODE: "${STORAGE_URL_MODE:-proxy}"
+      OSS_CDN_BASE_URL: "${OSS_CDN_BASE_URL:-}"
+      OSS_SIGNED_URL_TTL_SECONDS: "${OSS_SIGNED_URL_TTL_SECONDS:-86400}"
+      LLM_KEYS_FILE: /config/llm-keys.env
+      API_WORKERS: "${API_WORKERS:-2}"
+      MEDIA_ASYNC_ENABLED: "${MEDIA_ASYNC_ENABLED:-true}"
+      TEXT_ASYNC_ENABLED: "${TEXT_ASYNC_ENABLED:-true}"
+      DB_POOL_SIZE: "${DB_POOL_SIZE:-8}"
+      DB_MAX_OVERFLOW: "${DB_MAX_OVERFLOW:-8}"
+      WORKER_ENABLED: "0"
+      DEBUG: "false"
+      # 本地自测默认免鉴权，与前端 NEXT_PUBLIC_ADMIN_AUTH_DISABLED=true 对齐；生产请显式设 false
+      ADMIN_AUTH_DISABLED: "${ADMIN_AUTH_DISABLED:-true}"
+      DEV_ADMIN_PASSWORD: "${DEV_ADMIN_PASSWORD:-}"
+      CREDITS_ENABLED: "${CREDITS_ENABLED:-true}"
+      DEFAULT_USER_CREDITS: "${DEFAULT_USER_CREDITS:-0}"
+      AI_MOCK_ENABLED: "${AI_MOCK_ENABLED:-false}"
+    volumes:
+      - ./config/llm-keys.env:/config/llm-keys.env:ro
+      - ./data/oss-local:/app/data/oss-local
+      - ./packages/api/app:/app/app
+    ports: ["8001:8000"]
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: unless-stopped
+
+  worker-image:
+    image: jumeng-canvas-api
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    command: python -m app.worker.runner
+    environment:
+      DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
+      REDIS_URL: redis://redis:6379/0
+      COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
+      MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
+      MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
+      OSS_ENDPOINT: "${OSS_ENDPOINT:-}"
+      OSS_BUCKET: "${OSS_BUCKET:-}"
+      OSS_ACCESS_KEY_ID: "${OSS_ACCESS_KEY_ID:-}"
+      OSS_ACCESS_KEY_SECRET: "${OSS_ACCESS_KEY_SECRET:-}"
+      OSS_OBJECT_PREFIX: "${OSS_OBJECT_PREFIX:-canvas}"
+      CANVAS_STORAGE_LOCAL_ONLY: "${CANVAS_STORAGE_LOCAL_ONLY:-true}"
+      STORAGE_URL_MODE: "${STORAGE_URL_MODE:-proxy}"
+      LLM_KEYS_FILE: /config/llm-keys.env
+      WORKER_ENABLED: "1"
+      WORKER_LANES: image
+      WORKER_BURST_LIMIT: "4"
+      WORKER_PARALLELISM: "4"
+      MODEL_CONCURRENCY_DEFAULT_IMAGE: "4"
+      CREDITS_ENABLED: "${CREDITS_ENABLED:-true}"
+      AI_MOCK_ENABLED: "${AI_MOCK_ENABLED:-false}"
+      AI_MOCK_MIN_DELAY_S: "0.5"
+      AI_MOCK_MAX_DELAY_S: "2.0"
+      AI_MOCK_FAIL_RATE: "0.0"
+    volumes:
+      - ./config/llm-keys.env:/config/llm-keys.env:ro
+      - ./data/oss-local:/app/data/oss-local
+      - ./packages/api/app:/app/app
+    depends_on: [mysql, redis, api]
+    restart: unless-stopped
+
+  worker-video:
+    image: jumeng-canvas-api
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    command: python -m app.worker.runner
+    environment:
+      DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
+      REDIS_URL: redis://redis:6379/0
+      COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
+      MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
+      MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
+      OSS_ENDPOINT: "${OSS_ENDPOINT:-}"
+      OSS_BUCKET: "${OSS_BUCKET:-}"
+      OSS_ACCESS_KEY_ID: "${OSS_ACCESS_KEY_ID:-}"
+      OSS_ACCESS_KEY_SECRET: "${OSS_ACCESS_KEY_SECRET:-}"
+      OSS_OBJECT_PREFIX: "${OSS_OBJECT_PREFIX:-canvas}"
+      CANVAS_STORAGE_LOCAL_ONLY: "${CANVAS_STORAGE_LOCAL_ONLY:-true}"
+      STORAGE_URL_MODE: "${STORAGE_URL_MODE:-proxy}"
+      LLM_KEYS_FILE: /config/llm-keys.env
+      WORKER_ENABLED: "1"
+      WORKER_LANES: video
+      WORKER_BURST_LIMIT: "1"
+      WORKER_PARALLELISM: "1"
+      MODEL_CONCURRENCY_DEFAULT_VIDEO: "1"
+      AI_MOCK_ENABLED: "${AI_MOCK_ENABLED:-false}"
+      AI_MOCK_MIN_DELAY_S: "1.0"
+      AI_MOCK_MAX_DELAY_S: "3.0"
+      AI_MOCK_FAIL_RATE: "0.0"
+    volumes:
+      - ./config/llm-keys.env:/config/llm-keys.env:ro
+      - ./data/oss-local:/app/data/oss-local
+      - ./packages/api/app:/app/app
+    depends_on: [mysql, redis, api]
+    restart: unless-stopped
+
+  worker-audio:
+    image: jumeng-canvas-api
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    command: python -m app.worker.runner
+    environment:
+      DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
+      REDIS_URL: redis://redis:6379/0
+      COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
+      MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
+      MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
+      OSS_ENDPOINT: "${OSS_ENDPOINT:-}"
+      OSS_BUCKET: "${OSS_BUCKET:-}"
+      OSS_ACCESS_KEY_ID: "${OSS_ACCESS_KEY_ID:-}"
+      OSS_ACCESS_KEY_SECRET: "${OSS_ACCESS_KEY_SECRET:-}"
+      OSS_OBJECT_PREFIX: "${OSS_OBJECT_PREFIX:-canvas}"
+      CANVAS_STORAGE_LOCAL_ONLY: "${CANVAS_STORAGE_LOCAL_ONLY:-true}"
+      STORAGE_URL_MODE: "${STORAGE_URL_MODE:-proxy}"
+      LLM_KEYS_FILE: /config/llm-keys.env
+      WORKER_ENABLED: "1"
+      WORKER_LANES: audio
+      WORKER_BURST_LIMIT: "2"
+      WORKER_PARALLELISM: "2"
+      MODEL_CONCURRENCY_DEFAULT_AUDIO: "2"
+      AI_MOCK_ENABLED: "${AI_MOCK_ENABLED:-false}"
+      AI_MOCK_MIN_DELAY_S: "0.5"
+      AI_MOCK_MAX_DELAY_S: "2.0"
+      AI_MOCK_FAIL_RATE: "0.0"
+    volumes:
+      - ./config/llm-keys.env:/config/llm-keys.env:ro
+      - ./data/oss-local:/app/data/oss-local
+      - ./packages/api/app:/app/app
+    depends_on: [mysql, redis, api]
+    restart: unless-stopped
+
+  worker-text:
+    image: jumeng-canvas-api
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    command: python -m app.worker.runner
+    environment:
+      DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
+      REDIS_URL: redis://redis:6379/0
+      COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
+      MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
+      MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
+      # 与其它 worker 对齐：本地可无 OSS，写 data/oss-local
+      OSS_ENDPOINT: "${OSS_ENDPOINT:-}"
+      OSS_BUCKET: "${OSS_BUCKET:-}"
+      OSS_ACCESS_KEY_ID: "${OSS_ACCESS_KEY_ID:-}"
+      OSS_ACCESS_KEY_SECRET: "${OSS_ACCESS_KEY_SECRET:-}"
+      OSS_OBJECT_PREFIX: "${OSS_OBJECT_PREFIX:-canvas}"
+      CANVAS_STORAGE_LOCAL_ONLY: "${CANVAS_STORAGE_LOCAL_ONLY:-true}"
+      STORAGE_URL_MODE: "${STORAGE_URL_MODE:-proxy}"
+      LLM_KEYS_FILE: /config/llm-keys.env
+      WORKER_ENABLED: "1"
+      WORKER_LANES: text_llm
+      WORKER_BURST_LIMIT: "2"
+      WORKER_PARALLELISM: "2"
+      MODEL_CONCURRENCY_DEFAULT_TEXT: "2"
+      AI_MOCK_ENABLED: "${AI_MOCK_ENABLED:-false}"
+      AI_MOCK_MIN_DELAY_S: "0.3"
+      AI_MOCK_MAX_DELAY_S: "1.0"
+      AI_MOCK_FAIL_RATE: "0.0"
+    volumes:
+      - ./config/llm-keys.env:/config/llm-keys.env:ro
+      - ./data/oss-local:/app/data/oss-local
+      - ./packages/api/app:/app/app
+    depends_on: [mysql, redis, api]
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

@@ -1,0 +1,9 @@
+# Codex sidecar：隐式调用默认开。关隐式时写 policy.allow_implicit_invocation: false
+# 或顶层 allow_implicit_invocation: false（本系统两种都认，nested 优先）
+allow_implicit_invocation: true
+policy:
+  allow_implicit_invocation: true
+interface:
+  display_name: 单一产品电影级宣传片
+  short_description: 产品参考图 → 故事板 → 确认后成片
+  default_prompt: 用这张产品图做电影级宣传片

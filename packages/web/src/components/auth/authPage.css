@@ -1,0 +1,26 @@
+/* 独立 /login 全页登录：法务文案（弹窗样式见 loginModal.css） */
+
+.auth-page-legal {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.auth-page-legal-link {
+  margin: 0 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.auth-page-legal-link:hover {
+  color: rgba(255, 255, 255, 0.82);
+}

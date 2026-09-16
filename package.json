@@ -1,0 +1,19 @@
+{
+  "name": "jumeng-canvas-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @jumeng-canvas/web",
+    "build": "npm run build -w @jumeng-canvas/web",
+    "start": "npm run start -w @jumeng-canvas/web",
+    "lint": "npm run lint -w @jumeng-canvas/web",
+    "lan:prod": "node scripts/lan-prod.mjs",
+    "lan:ip": "node scripts/detect-lan.mjs",
+    "lan:firewall": "powershell -ExecutionPolicy Bypass -File scripts/allow-dev-firewall.ps1",
+    "api:build": "docker compose build api && docker compose up -d api"
+  }
+}

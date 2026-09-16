@@ -1,0 +1,226 @@
+/* 登录弹窗：门户挂到 body，不依赖 .huabu-scope */
+
+.login-modal-dialog {
+  max-width: min(920px, calc(100vw - 32px)) !important;
+  width: 100%;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 20px !important;
+  background: #fff !important;
+  color: #111;
+}
+
+.login-modal {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  min-height: 520px;
+  background: #fff;
+}
+
+.login-modal-left {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(196, 176, 150, 0.45), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(186, 168, 146, 0.35), transparent 46%),
+    #efe6d8;
+}
+
+/* 仅左栏运营图铺满；占位 Logo 不得被这条规则拉伸 */
+.login-modal-left > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.login-modal-left-fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  min-height: 520px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 40px;
+  color: #1a1a1a;
+}
+
+.login-modal-left-fallback img {
+  width: 72px;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-modal-left-fallback p {
+  margin: 28px 0 8px;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.login-modal-left-fallback span {
+  color: #6b6358;
+  font-size: 15px;
+}
+
+.login-modal-right {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 40px 28px;
+  background: #fff;
+}
+
+.login-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+}
+
+.login-modal-close:hover {
+  background: #f4f4f4;
+  color: #111;
+}
+
+.login-modal-right h2 {
+  margin: 0 0 22px;
+  /* 跟随系统主题主色（默认紫） */
+  color: var(--primary);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.login-modal-tabs {
+  display: flex;
+  gap: 28px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #eee;
+}
+
+.login-modal-tabs button {
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: #999;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.login-modal-tabs button.is-active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.login-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-modal-phone {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.login-modal-phone span {
+  flex-shrink: 0;
+  padding: 0 12px;
+  color: #333;
+  font-size: 14px;
+  border-right: 1px solid #eee;
+}
+
+.login-modal-phone input {
+  min-width: 0;
+  flex: 1;
+  padding: 12px 14px;
+  border: 0;
+  outline: none;
+  color: #111;
+  background: transparent;
+}
+
+.login-modal-submit {
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--primary-foreground, #fff);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-modal-submit:hover {
+  background: color-mix(in srgb, var(--primary) 88%, #000);
+}
+
+.login-modal-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-modal-legal {
+  margin: 4px 0 0;
+  color: #b0b0b0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.login-modal-legal-link {
+  margin: 0 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #737373;
+  font: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.login-modal-legal-link:hover {
+  color: #404040;
+}
+
+@media (max-width: 800px) {
+  .login-modal {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .login-modal-left {
+    display: none;
+  }
+
+  .login-modal-right {
+    padding: 28px 20px 20px;
+  }
+
+  .login-modal-right h2 {
+    font-size: 22px;
+  }
+}

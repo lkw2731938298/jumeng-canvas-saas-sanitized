@@ -1,0 +1,56 @@
+# robots.txt for 聚梦画布 (https://www.example.com/)
+# Updated: 2026-08-19
+
+# ---- 默认允许所有搜索引擎爬虫 ----
+User-agent: *
+
+# ---- 禁止抓取的后台/系统/隐私路径 ----
+Disallow: /admin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /user/
+Disallow: /account/
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /profile/
+Disallow: /auth/
+Disallow: /oauth/
+Disallow: /search?
+Disallow: /*?sessionid=
+Disallow: /*?token=
+Disallow: /*?ref=
+
+# ---- 禁止抓取动态参数页面 ----
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*?tab=
+
+# ---- 允许内容页面（首页、作品页、分类页等） ----
+Allow: /
+Allow: /work/
+Allow: /category/
+Allow: /tag/
+Allow: /creator/
+
+# ---- 屏蔽无价值/恶意爬虫 ----
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+# ---- 站点地图 ----
+Sitemap: https://www.example.com/sitemap.xml

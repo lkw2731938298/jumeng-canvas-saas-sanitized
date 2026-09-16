@@ -1,0 +1,7 @@
+allow_implicit_invocation: true
+policy:
+  allow_implicit_invocation: true
+interface:
+  display_name: 爆款复刻
+  short_description: 参考视频拉片复刻同款节奏
+  default_prompt: 按参考视频做爆款复刻

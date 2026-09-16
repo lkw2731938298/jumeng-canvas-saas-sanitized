@@ -1,0 +1,151 @@
+/* 法务弹窗：强制浅色纸面，避免继承站点 dark 的 popover 导致正文看不清 */
+
+.legal-document-overlay {
+  background: rgba(15, 12, 10, 0.62) !important;
+  backdrop-filter: blur(8px);
+}
+
+.legal-document-dialog {
+  display: flex !important;
+  flex-direction: column;
+  width: min(920px, calc(100vw - 32px)) !important;
+  max-width: min(920px, calc(100vw - 32px)) !important;
+  height: min(88vh, 860px) !important;
+  max-height: min(88vh, 860px) !important;
+  overflow: hidden;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #f6f1e8 !important;
+  color: #1c1917 !important;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(28, 25, 23, 0.06);
+  color-scheme: light;
+}
+
+.legal-document-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  background: #fffdf9;
+}
+
+.legal-document-title {
+  margin: 0;
+  color: #1c1917;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.legal-document-close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #f0ebe3;
+  color: #57534e;
+  cursor: pointer;
+}
+
+.legal-document-close:hover {
+  background: #e7e0d4;
+  color: #1c1917;
+}
+
+.legal-document-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px 36px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, 0.55), transparent 48px),
+    #f6f1e8;
+}
+
+.legal-document-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 240px;
+  color: #78716c;
+  font-size: 14px;
+}
+
+.legal-document-status.is-error {
+  color: #b42318;
+}
+
+.legal-markdown {
+  max-width: 720px;
+  margin: 0 auto;
+  color: #292524;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.legal-markdown .legal-md-h2 {
+  margin: 1.6em 0 0.55em;
+  color: #1c1917;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+
+.legal-markdown .legal-md-h2:first-child,
+.legal-markdown .legal-md-h3:first-child {
+  margin-top: 0;
+}
+
+.legal-markdown .legal-md-h3 {
+  margin: 1.35em 0 0.4em;
+  color: #44403c;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.legal-markdown .legal-md-p {
+  margin: 0 0 0.9em;
+  white-space: pre-wrap;
+}
+
+.legal-markdown .legal-md-list {
+  margin: 0 0 0.95em;
+  padding-left: 1.25em;
+  list-style: disc;
+}
+
+.legal-markdown .legal-md-list li {
+  margin: 0.28em 0;
+}
+
+@media (max-width: 640px) {
+  .legal-document-dialog {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    height: min(92vh, 860px) !important;
+    border-radius: 16px !important;
+  }
+
+  .legal-document-header {
+    padding: 14px 16px;
+  }
+
+  .legal-document-body {
+    padding: 18px 18px 28px;
+  }
+
+  .legal-markdown {
+    font-size: 14px;
+  }
+}

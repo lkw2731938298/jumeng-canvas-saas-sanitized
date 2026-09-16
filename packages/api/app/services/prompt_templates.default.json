@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "ma_joiner",
+      "tool": "multi_angle",
+      "category": "joiner",
+      "key": "default",
+      "label": "拼接符",
+      "content": "，",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "ma_consistency",
+      "tool": "multi_angle",
+      "category": "consistency",
+      "key": "default",
+      "label": "一致性约束",
+      "content": "保持与原图相同的主体、服装、场景布局与风格，仅改变摄像机机位",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "ma_h_0",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "0",
+      "label": "正面",
+      "content": "正面视角",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "ma_h_45",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "45",
+      "label": "右前45°",
+      "content": "右前45度视角",
+      "enabled": true,
+      "sort_order": 10
+    },
+    {
+      "id": "ma_h_90",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "90",
+      "label": "右侧",
+      "content": "右侧视角",
+      "enabled": true,
+      "sort_order": 20
+    },
+    {
+      "id": "ma_h_135",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "135",
+      "label": "右后45°",
+      "content": "右后45度视角",
+      "enabled": true,
+      "sort_order": 30
+    },
+    {
+      "id": "ma_h_180",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "180",
+      "label": "背面",
+      "content": "背面视角",
+      "enabled": true,
+      "sort_order": 40
+    },
+    {
+      "id": "ma_h_225",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "225",
+      "label": "左后45°",
+      "content": "左后45度视角",
+      "enabled": true,
+      "sort_order": 50
+    },
+    {
+      "id": "ma_h_270",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "270",
+      "label": "左侧",
+      "content": "左侧视角",
+      "enabled": true,
+      "sort_order": 60
+    },
+    {
+      "id": "ma_h_315",
+      "tool": "multi_angle",
+      "category": "horizontal",
+      "key": "315",
+      "label": "左前45°",
+      "content": "左前45度视角",
+      "enabled": true,
+      "sort_order": 70
+    },
+    {
+      "id": "ma_e_m30",
+      "tool": "multi_angle",
+      "category": "elevation",
+      "key": "-30",
+      "label": "俯视",
+      "content": "略微俯视",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "ma_e_0",
+      "tool": "multi_angle",
+      "category": "elevation",
+      "key": "0",
+      "label": "平视",
+      "content": "平视高度",
+      "enabled": true,
+      "sort_order": 10
+    },
+    {
+      "id": "ma_e_30",
+      "tool": "multi_angle",
+      "category": "elevation",
+      "key": "30",
+      "label": "仰视",
+      "content": "略微仰视",
+      "enabled": true,
+      "sort_order": 20
+    },
+    {
+      "id": "ma_s_close",
+      "tool": "multi_angle",
+      "category": "shot",
+      "key": "close",
+      "label": "特写",
+      "content": "特写镜头",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "ma_s_medium",
+      "tool": "multi_angle",
+      "category": "shot",
+      "key": "medium",
+      "label": "中景",
+      "content": "中景镜头",
+      "enabled": true,
+      "sort_order": 10
+    },
+    {
+      "id": "ma_s_wide",
+      "tool": "multi_angle",
+      "category": "shot",
+      "key": "wide",
+      "label": "全景",
+      "content": "全景镜头",
+      "enabled": true,
+      "sort_order": 20
+    },
+    {
+      "id": "panorama_suffix",
+      "tool": "panorama",
+      "category": "suffix",
+      "key": "default",
+      "label": "全景",
+      "content": "全景视图，360度环境展示",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "lighting_suffix",
+      "tool": "lighting",
+      "category": "suffix",
+      "key": "default",
+      "label": "打光",
+      "content": "专业布光，戏剧性光影，电影级照明",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "grid_9_suffix",
+      "tool": "grid_9",
+      "category": "suffix",
+      "key": "default",
+      "label": "九宫格",
+      "content": "九宫格构图，九张关联分镜",
+      "enabled": true,
+      "sort_order": 0
+    },
+    {
+      "id": "grid_split_suffix",
+      "tool": "grid_split",
+      "category": "suffix",
+      "key": "default",
+      "label": "宫格切分",
+      "content": "宫格切分布局，模块化分镜",
+      "enabled": true,
+      "sort_order": 0
+    }
+  ]
+}

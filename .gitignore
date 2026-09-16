@@ -1,0 +1,46 @@
+# 依赖与构建
+node_modules/
+.next/
+.turbo/
+dist/
+coverage/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# 本地密钥与环境（禁止入库）
+.env
+.env.*
+!.env.example
+packages/api/.env
+config/llm-keys.env
+config/alipay.env
+config/lan.env
+scripts/deploy/env.sh
+scripts/deploy/env.test.sh
+*.pem
+*.key
+
+# 本地数据与日志
+data/oss-local/
+data/assets.json
+data/workflow-presets.json
+logs/
+*.log
+oss_sync.log
+
+# 系统与 IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 搜索引擎验证 / 运维临时文件
+packages/web/public/baidu_verify*
+packages/web/public/*google*verification*
+scripts/deploy/_tmp_*
+packages/api/app/scripts/_tmp_*

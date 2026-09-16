@@ -1,0 +1,8 @@
+# Codex sidecar：隐式调用默认开。关隐式时写 policy.allow_implicit_invocation: false
+allow_implicit_invocation: true
+policy:
+  allow_implicit_invocation: true
+interface:
+  display_name: 第一视角催泪短片导演
+  short_description: 先写细腻剧本与多故事备选→定N镜询问→确认后出板出片（镜数不锁死）
+  default_prompt: 父亲从小送我上学到送我远行，主题父爱与传承；先写好剧本和台词，再定几镜问我确认

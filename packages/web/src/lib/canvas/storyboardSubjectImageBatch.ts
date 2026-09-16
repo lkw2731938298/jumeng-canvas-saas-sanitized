@@ -1,0 +1,239 @@
+import { notifyAssetsUpdated } from "@/lib/api/assets";
+import { getCreditQuote } from "@/lib/api/credits";
+import { generateFromMediaNode } from "@/lib/api/mediaGeneration";
+import type { CanvasModel } from "@/lib/api/models";
+import { getJobStatus, pollGenerationJob } from "@/lib/api/workflows";
+import {
+  defaultGenerationOptions,
+  getModelGenerationPresets,
+  normalizeGenerationOptions,
+} from "@/lib/canvas/generationPresets";
+import {
+  STORYBOARD_SUBJECT_IMAGE_MODEL,
+  SUBJECT_KIND_ASSET_SUBCATEGORY,
+  buildSubjectImagePrompt,
+  computeSubjectImageSourceHash,
+  needsSubjectImageGeneration,
+  subjectImageNodeId,
+  subjectKindToKey,
+  type StoryboardSubjectItem,
+  type StoryboardSubjectKind,
+  type StoryboardSubjectsBundle,
+} from "@/types/storyboard-subjects";
+
+const SUBJECT_SIZE_OPTION = { size: "1x1" } as const;
+// 角色主体图为「面部特写 + 全身三视图」的横向四联排布局，使用横版尺寸以容纳四个视图
+const ROLE_SIZE_OPTION = { size: "16x9" } as const;
+const DEFAULT_CONCURRENCY = 3;
+
+export interface SubjectImageTarget {
+  kind: StoryboardSubjectKind;
+  item: StoryboardSubjectItem;
+}
+
+export interface SubjectImageBatchCallbacks {
+  onItemStart: (subjectId: string) => void;
+  onItemDone: (subjectId: string, assetId: string, kind: StoryboardSubjectKind) => void;
+  onItemFail: (subjectId: string, error: string) => void;
+  onProgress?: (done: number, total: number) => void;
+}
+
+async function resolveJobAssetId(jobId: number | string): Promise<string | undefined> {
+  const raw = (await getJobStatus(jobId)) as Record<string, unknown>;
+  const direct = String(raw.assetId ?? raw.asset_id ?? "").trim();
+  if (direct) return direct;
+
+  const outputs = (raw.outputAssets ?? raw.output_assets ?? []) as Array<Record<string, unknown>>;
+  for (const item of outputs) {
+    const id = String(item?.assetId ?? item?.id ?? "").trim();
+    if (id) return id;
+  }
+  return undefined;
+}
+
+async function pollMediaJobResult(
+  jobId: number | string
+): Promise<{ assetId?: string; errorMessage?: string }> {
+  const polled = await pollGenerationJob(jobId, { maxWaitMs: 600_000 });
+  if (polled.status !== "succeeded") {
+    return { errorMessage: polled.errorMessage || "主体图生成失败" };
+  }
+  const assetId = await resolveJobAssetId(jobId);
+  if (assetId) {
+    notifyAssetsUpdated();
+    return { assetId };
+  }
+  return { errorMessage: "未返回主体图资产" };
+}
+
+async function generateOneSubjectImage(opts: {
+  projectId: string;
+  gridNodeId: string;
+  workflowId?: string;
+  kind: StoryboardSubjectKind;
+  item: StoryboardSubjectItem;
+  model: string;
+  generationOptions: Record<string, string>;
+  /** 分镜表所选视觉风格，后端生图时拼进 prompt */
+  visualStyleId?: string;
+}): Promise<{ assetId?: string; errorMessage?: string }> {
+  const virtualNodeId = subjectImageNodeId(opts.gridNodeId, opts.item.id);
+  const prompt = buildSubjectImagePrompt(opts.item, opts.kind);
+  const idempotencyKey = `storyboard-subject-image-${opts.gridNodeId}-${opts.item.id}-${computeSubjectImageSourceHash(opts.item, opts.kind)}`;
+
+  let quoteToken: string | undefined;
+  try {
+    const quote = await getCreditQuote({
+      model: opts.model,
+      category: "image",
+      generationOptions: opts.generationOptions,
+      canvasTool: "storyboard_subject_image",
+    });
+    quoteToken = quote.quoteToken;
+  } catch {
+    /* optional */
+  }
+
+  const result = await generateFromMediaNode(
+    {
+      projectId: opts.projectId,
+      nodeId: virtualNodeId,
+      workflowId: opts.workflowId,
+      category: "image",
+      prompt,
+      model: opts.model,
+      references: [],
+      generationOptions: opts.generationOptions,
+      assetSubcategory: SUBJECT_KIND_ASSET_SUBCATEGORY[opts.kind],
+      assetTitle: opts.item.name.trim() || undefined,
+      canvasTool: "storyboard_subject_image",
+      ...(opts.visualStyleId ? { visualStyleId: opts.visualStyleId } : {}),
+    },
+    { idempotencyKey, quoteToken }
+  );
+
+  if (result.status === "succeeded") {
+    if (result.assetId) {
+      notifyAssetsUpdated();
+      return { assetId: result.assetId };
+    }
+    if (result.jobId) {
+      return pollMediaJobResult(result.jobId);
+    }
+    return { errorMessage: result.message || "主体图生成失败" };
+  }
+
+  if (result.status === "pending" && result.jobId) {
+    return pollMediaJobResult(result.jobId);
+  }
+
+  if (result.status === "awaiting_approval") {
+    return { errorMessage: result.message || "已提交审批，等待项目创建者确认" };
+  }
+
+  return { errorMessage: result.message || "主体图生成失败" };
+}
+
+async function mapConcurrent<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>
+): Promise<void> {
+  if (items.length === 0) return;
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    for (;;) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) break;
+      await worker(items[index]);
+    }
+  });
+  await Promise.all(runners);
+}
+
+export function collectSubjectImageTargets(
+  subjects: StoryboardSubjectsBundle,
+  kind?: StoryboardSubjectKind,
+  subjectIds?: string[],
+  forceIds?: Set<string>
+): SubjectImageTarget[] {
+  const idSet = subjectIds?.length ? new Set(subjectIds) : null;
+  const kinds: StoryboardSubjectKind[] = kind ? [kind] : ["role", "scene", "prop"];
+  const targets: SubjectImageTarget[] = [];
+
+  for (const k of kinds) {
+    const key = subjectKindToKey(k);
+    for (const item of subjects[key]) {
+      if (idSet && !idSet.has(item.id)) continue;
+      if (!forceIds?.has(item.id) && !needsSubjectImageGeneration(item, k)) continue;
+      if (!item.extractPrompt.trim() && !item.name.trim()) continue;
+      targets.push({ kind: k, item });
+    }
+  }
+
+  return targets;
+}
+
+export async function runStoryboardSubjectImageBatch(
+  opts: {
+    projectId: string;
+    gridNodeId: string;
+    workflowId?: string;
+    subjects: StoryboardSubjectsBundle;
+    kind?: StoryboardSubjectKind;
+    targetSubjectIds?: string[];
+    model?: string;
+    imageModel?: CanvasModel;
+    concurrency?: number;
+    /** 分镜表所选视觉风格 */
+    visualStyleId?: string;
+  } & SubjectImageBatchCallbacks
+): Promise<void> {
+  const targets = collectSubjectImageTargets(opts.subjects, opts.kind, opts.targetSubjectIds);
+  const total = targets.length;
+  if (total === 0) {
+    opts.onProgress?.(0, 0);
+    return;
+  }
+
+  const model = opts.model ?? STORYBOARD_SUBJECT_IMAGE_MODEL;
+  const presets = getModelGenerationPresets(opts.imageModel);
+  const baseOptions = defaultGenerationOptions(presets);
+  // 角色使用横版（容纳面部特写 + 全身三视图四联排），场景/道具沿用方形
+  const buildOptionsForKind = (kind: StoryboardSubjectKind): Record<string, string> =>
+    normalizeGenerationOptions(presets, {
+      ...baseOptions,
+      ...(kind === "role" ? ROLE_SIZE_OPTION : SUBJECT_SIZE_OPTION),
+    });
+
+  let done = 0;
+  opts.onProgress?.(done, total);
+
+  await mapConcurrent(targets, opts.concurrency ?? DEFAULT_CONCURRENCY, async ({ kind, item }) => {
+    opts.onItemStart(item.id);
+    try {
+      const result = await generateOneSubjectImage({
+        projectId: opts.projectId,
+        gridNodeId: opts.gridNodeId,
+        workflowId: opts.workflowId,
+        kind,
+        item,
+        model,
+        generationOptions: buildOptionsForKind(kind),
+        visualStyleId: opts.visualStyleId,
+      });
+      if (result.assetId) {
+        opts.onItemDone(item.id, result.assetId, kind);
+      } else {
+        opts.onItemFail(item.id, result.errorMessage || "主体图生成失败");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "主体图生成失败";
+      opts.onItemFail(item.id, message);
+    } finally {
+      done += 1;
+      opts.onProgress?.(done, total);
+    }
+  });
+}
