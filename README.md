@@ -7,6 +7,15 @@ AI 视频 / 图片创作画布：节点工作流、素材管理、生成任务�
 
 许可证：[MIT](./LICENSE)
 
+## 社区与 API
+
+- 开源无限画布交流 QQ 群：`870365376`
+
+  ![开源无限画布交流群二维码](docs/qq-group.png)
+
+- 聚梦 API 国内站：<https://www.jumengai.com/>
+- 聚梦 API 海外站：<https://www.jumai.ai/>
+
 ## 功能
 
 - 画布工作流（图 / 视频 / 文本 / 音频节点）
