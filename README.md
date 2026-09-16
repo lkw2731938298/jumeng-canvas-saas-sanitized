@@ -44,12 +44,6 @@ npm install
 npm run dev
 ```
 
-浏览器打开：
-
-- 用户站：<http://localhost:3000/>
-- 管理后台：<http://localhost:3000/admin>
-- API 文档：<http://127.0.0.1:8001/docs>
-
 开发管理员（需在 `.env` 中设置 `DEV_ADMIN_PASSWORD`）：
 
 - 手机号：`13800000000`
