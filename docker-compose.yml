@@ -50,6 +50,9 @@ services:
       MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
       MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
       COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      LOCAL_API_KEY: "${LOCAL_API_KEY:-local}"
+      LOCAL_API_BASE: "${LOCAL_API_BASE:-http://host.docker.internal:8000/v1}"
+      LOCAL_MODEL_ROOT: "${LOCAL_MODEL_ROOT:-}"
       OSS_ENDPOINT: "${OSS_ENDPOINT:-}"
       OSS_BUCKET: "${OSS_BUCKET:-}"
       OSS_ACCESS_KEY_ID: "${OSS_ACCESS_KEY_ID:-}"
@@ -77,6 +80,8 @@ services:
       - ./config/llm-keys.env:/config/llm-keys.env:ro
       - ./data/oss-local:/app/data/oss-local
       - ./packages/api/app:/app/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports: ["8001:8000"]
     depends_on:
       mysql: { condition: service_healthy }
@@ -93,6 +98,9 @@ services:
       DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
       REDIS_URL: redis://redis:6379/0
       COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      LOCAL_API_KEY: "${LOCAL_API_KEY:-local}"
+      LOCAL_API_BASE: "${LOCAL_API_BASE:-http://host.docker.internal:8000/v1}"
+      LOCAL_MODEL_ROOT: "${LOCAL_MODEL_ROOT:-}"
       JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
       MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
       MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
@@ -118,6 +126,8 @@ services:
       - ./config/llm-keys.env:/config/llm-keys.env:ro
       - ./data/oss-local:/app/data/oss-local
       - ./packages/api/app:/app/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on: [mysql, redis, api]
     restart: unless-stopped
 
@@ -131,6 +141,9 @@ services:
       DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
       REDIS_URL: redis://redis:6379/0
       COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      LOCAL_API_KEY: "${LOCAL_API_KEY:-local}"
+      LOCAL_API_BASE: "${LOCAL_API_BASE:-http://host.docker.internal:8000/v1}"
+      LOCAL_MODEL_ROOT: "${LOCAL_MODEL_ROOT:-}"
       JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
       MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
       MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
@@ -155,6 +168,8 @@ services:
       - ./config/llm-keys.env:/config/llm-keys.env:ro
       - ./data/oss-local:/app/data/oss-local
       - ./packages/api/app:/app/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on: [mysql, redis, api]
     restart: unless-stopped
 
@@ -168,6 +183,9 @@ services:
       DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
       REDIS_URL: redis://redis:6379/0
       COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      LOCAL_API_KEY: "${LOCAL_API_KEY:-local}"
+      LOCAL_API_BASE: "${LOCAL_API_BASE:-http://host.docker.internal:8000/v1}"
+      LOCAL_MODEL_ROOT: "${LOCAL_MODEL_ROOT:-}"
       JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
       MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
       MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
@@ -192,6 +210,8 @@ services:
       - ./config/llm-keys.env:/config/llm-keys.env:ro
       - ./data/oss-local:/app/data/oss-local
       - ./packages/api/app:/app/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on: [mysql, redis, api]
     restart: unless-stopped
 
@@ -205,6 +225,9 @@ services:
       DATABASE_URL: mysql+aiomysql://jumeng_canvas:change-me@mysql:3306/jumeng_canvas
       REDIS_URL: redis://redis:6379/0
       COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-http://comfyui:8188}"
+      LOCAL_API_KEY: "${LOCAL_API_KEY:-local}"
+      LOCAL_API_BASE: "${LOCAL_API_BASE:-http://host.docker.internal:8000/v1}"
+      LOCAL_MODEL_ROOT: "${LOCAL_MODEL_ROOT:-}"
       JWT_SECRET: "${JWT_SECRET:-YOUR_JWT_SECRET_64_HEX_CHARS_REPLACE_ME_DO_NOT_USE_IN_PROD_XX}"
       MAIN_SITE_API_URL: "${MAIN_SITE_API_URL:-https://legacy-v.example.com}"
       MAIN_SITE_INTERNAL_TOKEN: "${MAIN_SITE_INTERNAL_TOKEN:-}"
@@ -230,6 +253,8 @@ services:
       - ./config/llm-keys.env:/config/llm-keys.env:ro
       - ./data/oss-local:/app/data/oss-local
       - ./packages/api/app:/app/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on: [mysql, redis, api]
     restart: unless-stopped
 

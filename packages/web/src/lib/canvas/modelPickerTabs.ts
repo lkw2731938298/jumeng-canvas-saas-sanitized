@@ -31,6 +31,7 @@ const IMAGE_TAB_RULES: TabRule[] = [
   { id: "nodyhub", label: "NodyHub", match: (m) => m.provider === "nodyhub" },
   { id: "jumengai", label: "聚梦", match: (m) => m.provider === "jumengai" },
   { id: "comfyui", label: "ComfyUI", match: (m) => m.provider === "comfyui" },
+  { id: "local", label: "本地模型", match: (m) => m.provider === "local" },
 ];
 
 /** 与主平台分镜「选取视频模型」Tab 顺序对齐 */
@@ -92,6 +93,7 @@ const VIDEO_TAB_RULES: TabRule[] = [
       !m.name.startsWith("rh_minimax_hailuo") &&
       !m.name.includes("subtitle"),
   },
+  { id: "local", label: "本地模型", match: (m) => m.provider === "local" },
 ];
 
 const AUDIO_TAB_RULES: TabRule[] = [

@@ -5,6 +5,8 @@ from typing import Optional
 
 import asyncio
 
+from ...core.deps import get_current_user_optional
+from ...models.user import User
 from ...services.model_availability import is_catalog_model_implemented, provider_group_label
 from ...models.database import get_db
 from ...models.job import Model
@@ -13,6 +15,7 @@ from ...services.credit_pricing import extract_pricing_config
 from ...services.generation_presets import public_presets
 from ...services.model_ui_tags import read_model_ui_tag_ids
 from ...services.storage_urls import normalize_browser_storage_url
+from ...services.user_local_models import is_visible_local_model
 
 router = APIRouter()
 
@@ -39,6 +42,7 @@ async def list_models(
     provider: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user_optional),
 ):
     """List available models with optional filtering."""
     from ...services.runtime_catalog_refresh import ensure_runtime_catalog_fresh
@@ -64,10 +68,12 @@ async def list_models(
         result = await db.execute(q)
         models = list(result.scalars().all())
 
+    uid = str(user.id) if user is not None else None
     models = [
         m
         for m in models
         if not (isinstance(m.parameters, dict) and m.parameters.get("adminSoftDeleted"))
+        and is_visible_local_model(m, uid)
     ]
 
     configured_flags = await asyncio.gather(

@@ -305,6 +305,46 @@ export function createAdminModel(data: {
   });
 }
 
+export type ComfyuiDiscoverItem = {
+  filename: string;
+  folder: string;
+  category: string;
+  displayName: string;
+  source?: string;
+};
+
+export function discoverAdminComfyuiModels(baseUrl?: string) {
+  const qs = baseUrl ? `?baseUrl=${encodeURIComponent(baseUrl)}` : "";
+  return apiFetch<{ baseUrl: string; count: number; items: ComfyuiDiscoverItem[] }>(
+    `/api/v1/admin/models/comfyui/discover${qs}`
+  );
+}
+
+export function syncAdminComfyuiModels(data: {
+  baseUrl?: string;
+  items?: Array<{
+    filename: string;
+    folder?: string;
+    category?: string;
+    displayName?: string;
+    comfyWorkflow?: unknown;
+  }>;
+}) {
+  return apiFetch<{
+    baseUrl: string;
+    created: number;
+    skipped: number;
+    createdNames: string[];
+    skippedFiles: string[];
+  }>("/api/v1/admin/models/comfyui/sync", {
+    method: "POST",
+    body: JSON.stringify({
+      baseUrl: data.baseUrl,
+      items: data.items,
+    }),
+  });
+}
+
 export function deleteAdminModel(modelId: string) {
   return apiFetch<AdminModel>(`/api/v1/admin/models/${modelId}`, { method: "DELETE" });
 }

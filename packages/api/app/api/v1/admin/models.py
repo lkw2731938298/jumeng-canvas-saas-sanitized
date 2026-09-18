@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
 from ....core.entity_ids import require_entity_id
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +26,13 @@ from ....services.model_availability import is_catalog_model_implemented, provid
 from ....services.model_catalog_runtime import reload_runtime_model_catalog
 
 router = APIRouter()
+
+
+class ComfyuiSyncIn(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    base_url: Optional[str] = Field(None, alias="baseUrl")
+    items: Optional[list[dict[str, Any]]] = None
 
 
 def _model_out(model: Model) -> AdminModelOut:
@@ -203,6 +211,33 @@ async def create_admin_model_route(
         channels=body.channels,
     )
     return _model_out(model)
+
+
+@router.get("/models/comfyui/discover")
+async def discover_comfyui_local_models(
+    base_url: Optional[str] = Query(None, alias="baseUrl"),
+    _: User = Depends(require_permission(PERM_MODELS)),
+):
+    """探测用户自己的 ComfyUI 本机模型（不写库）。"""
+    from ....services.comfyui_model_sync import preview_comfyui_models
+
+    return await preview_comfyui_models(base_url)
+
+
+@router.post("/models/comfyui/sync")
+async def sync_comfyui_local_models(
+    body: ComfyuiSyncIn,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_permission(PERM_MODELS)),
+):
+    """一键把探测到的（或勾选的）ComfyUI 权重写入画布模型目录。"""
+    from ....services.comfyui_model_sync import sync_comfyui_models_to_catalog
+
+    return await sync_comfyui_models_to_catalog(
+        db,
+        base_url=body.base_url,
+        items=body.items,
+    )
 
 
 @router.get("/models/{model_id}", response_model=AdminModelOut)

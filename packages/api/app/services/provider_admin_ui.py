@@ -107,6 +107,12 @@ _PROVIDER_UI: dict[str, dict[str, Any]] = {
         "fields": [_FIELD_API_KEY, _FIELD_API_BASE],
         "profiles": [_PROFILE_DEFAULT],
     },
+    "local": {
+        "docsUrl": "https://github.com/minimax-ai/minimax-h3",
+        "summary": "本机 OpenAI 兼容推理（Ollama / vLLM / SGLang）。Key 可填 local；API Base 如 http://127.0.0.1:8000/v1 或 Docker 下 http://host.docker.internal:8000/v1",
+        "fields": [_FIELD_API_KEY, _FIELD_API_BASE],
+        "profiles": [_PROFILE_DEFAULT],
+    },
     "openai": {
         "docsUrl": "https://platform.openai.com/",
         "summary": "OpenAI 兼容接口",

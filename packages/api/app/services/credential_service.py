@@ -52,6 +52,7 @@ _PROVIDER_CFG_FIELD: dict[str, str] = {
     "nodyhub": "nodyhub",
     "huahu": "huahu",
     "jumengai": "jumengai",
+    "local": "local",
 }
 
 _PROVIDER_SEED_META: list[dict[str, Any]] = [
@@ -78,6 +79,11 @@ _PROVIDER_SEED_META: list[dict[str, Any]] = [
     {"code": "qwen", "display_name": "通义千问", "default_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1"},
     {"code": "zhipu", "display_name": "智谱", "default_api_base": "https://open.bigmodel.cn/api/paas/v4"},
     {"code": "moonshot", "display_name": "Moonshot", "default_api_base": "https://api.moonshot.cn/v1"},
+    {
+        "code": "local",
+        "display_name": "本地模型（OpenAI 兼容 / ComfyUI / SGLang）",
+        "default_api_base": "http://127.0.0.1:8000/v1",
+    },
 ]
 
 
@@ -164,6 +170,7 @@ def merge_db_and_env_keys(db_cfg: LlmKeysConfig, env_cfg: LlmKeysConfig, *, allo
         nodyhub=pick(db_cfg.nodyhub, env_cfg.nodyhub),
         huahu=pick(db_cfg.huahu, env_cfg.huahu),
         jumengai=pick(db_cfg.jumengai, env_cfg.jumengai),
+        local=pick(db_cfg.local, env_cfg.local),
         doubao_text_model=db_cfg.doubao_text_model or env_cfg.doubao_text_model,
         doubao_image_model=db_cfg.doubao_image_model or env_cfg.doubao_image_model,
         doubao_image_endpoint_id=db_cfg.doubao_image_endpoint_id or env_cfg.doubao_image_endpoint_id,
@@ -244,6 +251,7 @@ def _credential_rows_from_env(cfg: LlmKeysConfig) -> list[tuple[str, str, Provid
     add("nodyhub", cfg.nodyhub)
     add("huahu", cfg.huahu)
     add("jumengai", cfg.jumengai)
+    add("local", cfg.local)
     add("openai", cfg.openai)
     # Qwen：仅显式 QWEN_API_KEY，禁止用 DashScope 回退覆盖
     if (raw.get("QWEN_API_KEY") or "").strip():
@@ -397,6 +405,8 @@ async def load_llm_keys_config_from_db(db: AsyncSession) -> LlmKeysConfig:
             cfg.huahu = keys
         elif row.provider_code == "jumengai":
             cfg.jumengai = keys
+        elif row.provider_code == "local":
+            cfg.local = keys
         elif row.provider_code == "openai":
             cfg.openai = keys
         elif row.provider_code == "qwen":

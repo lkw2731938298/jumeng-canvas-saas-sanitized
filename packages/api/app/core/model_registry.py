@@ -27,6 +27,7 @@ ProviderId = Literal[
     "qwen",
     "zhipu",
     "moonshot",
+    "local",
 ]
 
 Capability = Literal[

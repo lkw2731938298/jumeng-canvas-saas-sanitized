@@ -25,6 +25,7 @@ import { CreditActivitiesPanel } from "@/components/user/CreditActivitiesPanel";
 import { CreditConsumePriorityEditor } from "@/components/user/CreditConsumePriorityEditor";
 import { CreditTransactionHistoryPanel } from "@/components/user/CreditTransactionHistoryPanel";
 import { MembershipPanel } from "@/components/user/MembershipPanel";
+import { LocalModelsPanel } from "@/components/user/LocalModelsPanel";
 import { StorageQuotaPanel } from "@/components/user/StorageQuotaPanel";
 import { CreditRechargeDialog } from "@/components/user/CreditRechargeDialog";
 import { UserAccountMenu } from "@/components/user/UserAccountMenu";
@@ -393,6 +394,11 @@ export default function AccountPage() {
             <GlassCard>
               <CardTitle>会员订阅</CardTitle>
               <MembershipPanel />
+            </GlassCard>
+
+            <GlassCard className="md:col-span-2 lg:col-span-3">
+              <CardTitle>本地模型</CardTitle>
+              <LocalModelsPanel />
             </GlassCard>
 
             {/* 全宽：避免半栏挤压导致备注/任务号被截断 */}

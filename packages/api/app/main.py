@@ -170,7 +170,7 @@ app.add_middleware(
     allow_methods=["*"], allow_headers=["*"],
 )
 
-from .api.v1 import auth, projects, workflows, generations, models as models_api, node_texts, drawing_drafts, director_scenes, video_editor_drafts, node_groups, assets, storage, text_generation, media_generation, canvas_tools, prompt_templates, prompt_config, credits, credit_activities, subscriptions, payments, error_codes, site, workflow_publications, viral_remake, voices, skills, agent, agent_keys, openapi_agent, material_library, notifications, referral
+from .api.v1 import auth, projects, workflows, generations, models as models_api, node_texts, drawing_drafts, director_scenes, video_editor_drafts, node_groups, assets, storage, text_generation, media_generation, canvas_tools, prompt_templates, prompt_config, credits, credit_activities, subscriptions, payments, error_codes, site, workflow_publications, viral_remake, voices, skills, agent, agent_keys, openapi_agent, material_library, notifications, referral, local_models
 from .api.v1.admin import router as admin_router
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
@@ -178,6 +178,7 @@ app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"]
 app.include_router(workflows.router, prefix="/api/v1/workflows", tags=["workflows"])
 app.include_router(generations.router, prefix="/api/v1/generations", tags=["generations"])
 app.include_router(models_api.router, prefix="/api/v1/models", tags=["models"])
+app.include_router(local_models.router, prefix="/api/v1", tags=["local-models"])
 app.include_router(node_texts.router, prefix="/api/v1/node-texts", tags=["node-texts"])
 app.include_router(drawing_drafts.router, prefix="/api/v1/drawing-drafts", tags=["drawing-drafts"])
 app.include_router(director_scenes.router, prefix="/api/v1/director-scenes", tags=["director-scenes"])

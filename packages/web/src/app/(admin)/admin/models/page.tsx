@@ -16,6 +16,7 @@ import { ModelAdminDrawer } from "@/components/admin/ModelAdminDrawer";
 import { ModelUiTagsPanel } from "@/components/admin/ModelUiTagsPanel";
 import { ModelUiSeriesPanel } from "@/components/admin/ModelUiSeriesPanel";
 import { CanvasToolModelSwitchPanel } from "@/components/admin/CanvasToolModelSwitchPanel";
+import { ComfyUISyncPanel } from "@/components/admin/ComfyUISyncPanel";
 import { cn } from "@/lib/utils";
 
 function StatusBadge({ model }: { model: AdminModel }) {
@@ -231,8 +232,10 @@ export default function AdminModelsPage() {
     <>
       <AdminHeader
         title="模型开关"
-        description="按能力分类管理模型；仅「可用」且已接入上游的模型会在画布节点中展示"
+        description="按能力分类管理模型；仅「可用」且已接入上游的模型会在画布节点中展示。自建部署可从本机 ComfyUI 同步权重。"
       />
+
+      <ComfyUISyncPanel />
 
       <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-1">
         {NODE_MODEL_CATEGORIES.map((cat) => {

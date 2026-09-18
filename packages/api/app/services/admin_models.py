@@ -48,6 +48,7 @@ VALID_PROVIDERS = frozenset(
         "qwen",
         "zhipu",
         "moonshot",
+        "local",
     }
 )
 VALID_IMPLEMENTATIONS = frozenset({"live", "reserved"})
@@ -366,11 +367,39 @@ def evaluate_model_connectivity(model: Model) -> dict[str, Any]:
     if model.provider == "comfyui":
         from ..core.config import get_settings
 
-        ok = bool(get_settings().comfyui_base_url.strip())
+        params = model.parameters if isinstance(model.parameters, dict) else {}
+        ok = bool(str(params.get("comfyBaseUrl") or get_settings().comfyui_base_url or "").strip())
         return {
             "ok": ok,
             "message": "ComfyUI 地址已配置" if ok else "ComfyUI 地址未配置",
             "is_configured": ok,
+            "is_implemented": implemented,
+        }
+
+    if model.provider == "local":
+        from ..core.llm_keys import _provider_keys
+
+        params = model.parameters if isinstance(model.parameters, dict) else {}
+        cfg = get_llm_keys()
+        creds = _provider_keys(cfg, "local", model_id=model.name)
+        has_base = bool(
+            str(params.get("localApiBase") or "").strip()
+            or (creds.api_base or "").strip()
+            or (creds.api_key or "").strip()
+        )
+        ok = has_base and implemented
+        return {
+            "ok": ok,
+            "message": (
+                "本地 API 地址已配置且模型可接入"
+                if ok
+                else (
+                    "请在供应商密钥中填写 local 的 API Base（如 http://127.0.0.1:8000/v1）"
+                    if not has_base
+                    else "本地地址已配置，但模型尚未标记为 live"
+                )
+            ),
+            "is_configured": has_base,
             "is_implemented": implemented,
         }
 

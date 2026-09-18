@@ -22,6 +22,7 @@ AI 视频 / 图片创作画布：节点工作流、素材管理、生成任务�
 - 用户注册登录（开发环境可走本地短信调试）
 - 管理后台：模型、定价、页脚、用户与算力
 - Docker Compose 一键拉起 MySQL / Redis / API / Worker
+- 本地模型：管理后台可从本机 ComfyUI 一键同步；用户也可在个人中心挂自己的图 / 视频模型（不绑定固定路径或某一型号）
 
 ## 快速开始
 
@@ -61,6 +62,10 @@ npm run dev
 | `scripts/deploy/env.sh.example` | 自建部署变量模板 |
 
 **不要**把真实口令、API Key、ICP 备案号写进仓库。
+
+## 本地模型
+
+自建部署可把**你自己的** ComfyUI / Ollama / vLLM 接到画布，步骤见 [docs/local-models.md](./docs/local-models.md)。不绑定固定磁盘路径或某一型号。
 
 ## 贡献与安全
 

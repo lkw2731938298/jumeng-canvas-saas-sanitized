@@ -37,7 +37,9 @@ from ..upstream.jumengai import (
     jumengai_subtitle_erase,
     jumengai_video_generate,
 )
+from ..upstream.local import local_image_generate, local_video_generate
 from ..upstream.nodyhub import nodyhub_image_generate, nodyhub_video_generate
+from ..comfyui.execute import resolve_comfy_base_url, run_comfyui_generation
 from ..upstream.reference_url import resolve_reference_urls
 from ..upstream.runninghub import (
     runninghub_audio_extract,
@@ -185,7 +187,9 @@ def _api_str(params: dict[str, Any], *keys: str, default: str = "") -> str:
 
 async def generate_text(req: TextGenRequest) -> str:
     """按 model_id 调用 LLM 聊天补全，返回生成文本。"""
-    if req.model_id not in _LIVE_TEXT_MODELS:
+    spec = get_model_spec(req.model_id)
+    # 本地 OpenAI 兼容文本：后台录入的 custom 模型不在预置白名单里
+    if req.model_id not in _LIVE_TEXT_MODELS and not (spec and spec.provider == "local"):
         raise ProviderNotImplementedError(req.model_id, "chat_completion")
     return await chat_completion(
         req.model_id,
@@ -339,6 +343,44 @@ async def generate_image(req: ImageGenRequest) -> ImageGenBatchResult:
                 negative_prompt=neg,
             )
             return ImageGenBatchResult(images=await _download_image_results(img_urls))
+
+        # 本地 OpenAI 兼容图片（Ollama / vLLM / 自建网关；可按模型覆盖 api_base）
+        if spec.provider == "local":
+            extra = spec.parameters_extra or {}
+            img_urls = await local_image_generate(
+                model=spec.upstream_model or req.model_id,
+                prompt=req.prompt,
+                reference_urls=refs if refs else None,
+                size=_api_str(params, "size", default=size or "1024x1024"),
+                n=count,
+                api_base_override=str(extra.get("localApiBase") or "").strip() or None,
+            )
+            return ImageGenBatchResult(images=await _download_image_results(img_urls))
+
+        # 用户本机 ComfyUI 图片（默认 SD 文生图；可绑 API 工作流）
+        if spec.provider == "comfyui":
+            extra = spec.parameters_extra or {}
+            from ...core.config import get_settings
+
+            comfy_url = resolve_comfy_base_url(extra, get_settings().comfyui_base_url)
+            ckpt = str(extra.get("comfyFile") or spec.upstream_model or "").strip()
+            images: list[ImageGenResult] = []
+            for _ in range(count):
+                data, content_type, ext = await run_comfyui_generation(
+                    base_url=comfy_url,
+                    model_filename=ckpt,
+                    prompt=req.prompt,
+                    negative=_api_str(params, "negative_prompt", "negativePrompt", default=""),
+                    category="image",
+                    workflow=extra.get("comfyWorkflow"),
+                    reference_image_url=(refs[0] if refs else None),
+                    width=_api_int(params, "width", default=1024) or 1024,
+                    height=_api_int(params, "height", default=1024) or 1024,
+                )
+                images.append(
+                    ImageGenResult(data=data, content_type=content_type, ext=ext, source_url="")
+                )
+            return ImageGenBatchResult(images=images)
 
         # NodyHub OpenAI 兼容图片
         if spec.provider == "nodyhub":
@@ -885,6 +927,62 @@ async def generate_video(req: VideoGenRequest) -> VideoGenResult:
             else:
                 raise UpstreamError(f"不支持的华狐视频模式: {spec.video_mode}", code="INVALID_MODEL")
             video_url = await huahu_seedance_video_generate(body=body)
+            data, content_type = await download_bytes(video_url)
+            return VideoGenResult(data=data, content_type=content_type or "video/mp4", ext="mp4", source_url=video_url)
+
+        # --- 用户本机 ComfyUI 视频（须绑定 API 工作流 JSON）---
+        if spec.provider == "comfyui":
+            extra = spec.parameters_extra or {}
+            from ...core.config import get_settings
+
+            comfy_url = resolve_comfy_base_url(extra, get_settings().comfyui_base_url)
+            ckpt = str(extra.get("comfyFile") or spec.upstream_model or "").strip()
+            ref_img = first_url or (image_refs[0] if image_refs else None)
+            data, content_type, ext = await run_comfyui_generation(
+                base_url=comfy_url,
+                model_filename=ckpt,
+                prompt=req.prompt,
+                negative=_api_str(params, "negative_prompt", "negativePrompt", default=""),
+                category="video",
+                workflow=extra.get("comfyWorkflow"),
+                reference_image_url=ref_img,
+                width=_api_int(params, "width", default=768) or 768,
+                height=_api_int(params, "height", default=768) or 768,
+            )
+            return VideoGenResult(data=data, content_type=content_type or "video/mp4", ext=ext or "mp4", source_url="")
+
+        # --- 本地 OpenAI 兼容视频 ---
+        if spec.provider == "local":
+            extra = spec.parameters_extra or {}
+            model_name = (upstream or model_id).strip()
+            gen_audio = bool(
+                params.get("generateAudio", params.get("audio", params.get("generate_audio", True)))
+            )
+            ratio_api = _api_str(params, "ratio", "aspectRatio", default="16:9") or "16:9"
+            dur = max(4, min(15, int(duration or 5)))
+            local_images = [u for u in (image_refs or []) if u] or [
+                u for u in refs if _is_probably_image_url(u)
+            ]
+            if first_url and first_url not in local_images:
+                local_images = [first_url, *local_images]
+            if last_url and last_url not in local_images:
+                local_images.append(last_url)
+            local_videos = [u for u in (video_refs or []) if u] or [
+                u for u in refs if _is_probably_video_url(u)
+            ]
+            local_audios = [u for u in (audio_refs or []) if u]
+            video_url = await local_video_generate(
+                model=model_name,
+                prompt=req.prompt,
+                duration_sec=dur,
+                resolution=resolution or "768p",
+                ratio=ratio_api,
+                generate_audio=gen_audio,
+                image_urls=local_images,
+                video_urls=local_videos,
+                audio_urls=local_audios,
+                api_base_override=str(extra.get("localApiBase") or "").strip() or None,
+            )
             data, content_type = await download_bytes(video_url)
             return VideoGenResult(data=data, content_type=content_type or "video/mp4", ext="mp4", source_url=video_url)
 

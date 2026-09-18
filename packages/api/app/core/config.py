@@ -76,6 +76,8 @@ class Settings(BaseSettings):
     file_log_base_dir: str = "logs"
 
     comfyui_base_url: str = "http://localhost:8188"
+    # 可选：本机权重根目录提示（画布不直接读盘，只走 HTTP）
+    local_model_root: str = ""
 
     oss_endpoint: str = ""
     oss_bucket: str = ""

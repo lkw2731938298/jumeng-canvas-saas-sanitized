@@ -32,6 +32,7 @@ const PROVIDERS = [
   "huahu",
   "jumengai",
   "comfyui",
+  "local",
   "openai",
   "qwen",
   "zhipu",

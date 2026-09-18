@@ -75,6 +75,10 @@ class LlmKeysConfig(BaseModel):
     jumengai: ProviderKeys = Field(
         default_factory=lambda: ProviderKeys(api_base="https://api.example.com/v1")
     )
+    # 本机 OpenAI 兼容推理（Ollama / vLLM / SGLang / 自建网关）
+    local: ProviderKeys = Field(
+        default_factory=lambda: ProviderKeys(api_base="http://127.0.0.1:8000/v1")
+    )
     doubao_text_model: str = ""
     doubao_image_model: str = ""
     doubao_image_endpoint_id: str = ""
@@ -192,6 +196,10 @@ def _build_config(values: dict[str, str]) -> LlmKeysConfig:
             api_key=values.get("JUMENGAI_API_KEY", ""),
             api_base=values.get("JUMENGAI_API_BASE", "https://api.example.com/v1"),
         ),
+        local=ProviderKeys(
+            api_key=values.get("LOCAL_API_KEY", "") or "local",
+            api_base=values.get("LOCAL_API_BASE", "http://127.0.0.1:8000/v1"),
+        ),
         doubao_text_model=values.get("DOUBAO_TEXT_MODEL", ""),
         doubao_image_model=values.get("DOUBAO_IMAGE_MODEL", ""),
         doubao_image_endpoint_id=values.get("DOUBAO_IMAGE_ENDPOINT_ID", ""),
@@ -302,10 +310,14 @@ def get_model_credentials(model_id: str) -> ProviderKeys:
         creds = cfg.doubao
 
     if not creds.api_key:
-        raise ValueError(
-            f"API key not configured for model '{model_id}' (provider '{provider}'). "
-            "请在管理后台配置供应商密钥"
-        )
+        # 本地推理常无真实 Key，有 api_base 即视为已配置
+        if provider == "local" and (creds.api_base or "").strip():
+            creds = ProviderKeys(api_key="local", api_base=creds.api_base)
+        else:
+            raise ValueError(
+                f"API key not configured for model '{model_id}' (provider '{provider}'). "
+                "请在管理后台配置供应商密钥"
+            )
     return creds
 
 
@@ -313,6 +325,10 @@ def is_provider_configured(provider: str, *, model_id: str = "", cfg: LlmKeysCon
     """按供应商检查密钥是否可用（供 DB 自定义模型使用）。"""
     if provider == "comfyui":
         return True
+    if provider == "local":
+        resolved_cfg = cfg if cfg is not None else get_llm_keys()
+        creds = _provider_keys(resolved_cfg, provider, model_id=model_id)
+        return bool((creds.api_base or "").strip() or (creds.api_key or "").strip())
 
     resolved_cfg = cfg if cfg is not None else get_llm_keys()
     creds = _provider_keys(resolved_cfg, provider, model_id=model_id)

@@ -20,16 +20,17 @@ logger = logging.getLogger(__name__)
 class ComfyUIClient:
     """Async HTTP client for ComfyUI REST API."""
 
-    def __init__(self, base_url: str | None = None):
+    def __init__(self, base_url: str | None = None, *, timeout_s: float = 60.0):
         settings = get_settings()
         self.base_url = (base_url or settings.comfyui_base_url).rstrip("/")
+        self._timeout_s = timeout_s
         self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
-                timeout=httpx.Timeout(30.0, connect=10.0),
+                timeout=httpx.Timeout(self._timeout_s, connect=10.0),
             )
         return self._client
 
@@ -118,6 +119,52 @@ class ComfyUIClient:
     async def get_extensions(self) -> list[str]:
         """GET /extensions"""
         return await self._request("GET", "/extensions")  # type: ignore[return-value]
+
+    async def list_models(self, folder: str) -> list[str]:
+        """GET /models/{folder} — 该 ComfyUI 实例实际扫描到的文件名。"""
+        folder = (folder or "").strip().strip("/")
+        if not folder:
+            return []
+        data = await self._request("GET", f"/models/{folder}")
+        if isinstance(data, list):
+            return [str(x).strip() for x in data if str(x).strip()]
+        if isinstance(data, dict):
+            inner = data.get("files") or data.get("models") or []
+            if isinstance(inner, list):
+                return [str(x).strip() for x in inner if str(x).strip()]
+        return []
+
+    async def upload_image(self, data: bytes, filename: str = "input.png") -> str:
+        """POST /upload/image — 把参考图传到该 ComfyUI，返回其可用文件名。"""
+        client = await self._get_client()
+        files = {"image": (filename or "input.png", data, "application/octet-stream")}
+        resp = await client.post("/upload/image", files=files, data={"overwrite": "true"})
+        resp.raise_for_status()
+        body = resp.json() if resp.content else {}
+        name = str((body or {}).get("name") or filename).strip()
+        if not name:
+            raise RuntimeError("ComfyUI 上传未返回文件名")
+        return name
+
+    async def submit_and_wait_existing(
+        self,
+        prompt_id: str,
+        poll_interval: float = 1.0,
+        max_wait_s: float = 1800.0,
+    ) -> dict | None:
+        """已 queue 的 prompt_id 轮询 history 直至完成。"""
+        pid = str(prompt_id or "").strip()
+        if not pid:
+            return None
+        elapsed = 0.0
+        while elapsed < max_wait_s:
+            history = await self.get_history(pid)
+            if isinstance(history, dict) and pid in history:
+                return history[pid]
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+        logger.warning("Prompt %s timed out after %ss", pid, max_wait_s)
+        return None
 
     # ── High-Level Helpers ────────────────────────────────────
 

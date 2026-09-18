@@ -13,7 +13,9 @@ def is_model_implemented(model_id: str) -> bool:
     if not spec:
         return False
     if spec.provider == "comfyui":
-        return bool(get_settings().comfyui_base_url.strip())
+        extra = spec.parameters_extra or {}
+        url = str(extra.get("comfyBaseUrl") or get_settings().comfyui_base_url or "").strip()
+        return bool(url)
     if not is_spec_implementation_live(spec):
         return False
     return is_model_configured(model_id)
@@ -31,7 +33,11 @@ def is_catalog_model_implemented(model: Model) -> bool:
     if params.get("implementation", "reserved") != "live":
         return False
     if model.provider == "comfyui":
-        return bool(get_settings().comfyui_base_url.strip())
+        url = str(params.get("comfyBaseUrl") or get_settings().comfyui_base_url or "").strip()
+        return bool(url)
+    if model.provider == "local":
+        if str(params.get("localApiBase") or "").strip():
+            return True
     return is_provider_configured(model.provider, model_id=model.name)
 
 
@@ -60,6 +66,7 @@ PROVIDER_GROUP_LABELS: dict[str, str] = {
     "huahu": "华狐 AI · Seedance",
     "jumengai": "聚梦 AI 网关 · 图片 / 视频 / 去字幕",
     "comfyui": "ComfyUI 本地推理",
+    "local": "本地模型 · OpenAI 兼容 / SGLang",
     "openai": "OpenAI",
     "qwen": "百炼兼容 · 通义 / DeepSeek",
     "zhipu": "智谱",

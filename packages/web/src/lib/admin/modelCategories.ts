@@ -23,6 +23,7 @@ export const PROVIDER_GROUP_ORDER = [
   "NodyHub · 图片 / 视频",
   "华狐 AI · Seedance",
   "ComfyUI 本地推理",
+  "本地模型 · OpenAI 兼容 / SGLang",
 ] as const;
 
 export type NodeModelCategoryId = (typeof NODE_MODEL_CATEGORIES)[number]["id"];
